@@ -18,7 +18,8 @@ commands:
       component: udi
       workingDir: ${PROJECT_SOURCE}
       commandLine: |
-        oc delete deploy {{imagename}}; \
+        oc delete deployment {{imagename}}; \
+        oc delete bc {{imagename}}; \
         oc delete is {{imagename}}; \
         for i in $(oc get images | grep "{{localregistry}}/{{whoami}}-devspaces/{{imagename}}" | awk '{print $1}'); do oc delete image $i;done
       group:
