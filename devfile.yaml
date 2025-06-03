@@ -1,0 +1,58 @@
+schemaVersion: 2.1.0
+metadata:
+  name: python-devspaces-demo
+variables:
+  whoami: $(oc whoami)
+  token: $(oc whoami -t)
+  imagename: "python-devspaces-demo"
+  localregistry: "image-registry.openshift-image-registry.svc:5000"
+  tag: "latest"
+components:
+  - name: udi
+    container:
+      image: registry.redhat.io/devspaces/udi-rhel8@sha256:de81824e6ccf82a286a28566432d4f43928a989c570578c4b4df9484ef136cca
+commands:
+  - id: cleanupdeployimagestreamandimages
+    exec:
+      label: "0- Cleanup deploy, imagesteams and images"
+      component: udi
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: |
+        oc delete deploy {{imagename}}; \
+        oc delete is {{imagename}}; \
+        for i in $(oc get images | grep "{{localregistry}}/{{whoami}}-devspaces/{{imagename}}" | awk '{print $1}'); do oc delete image $i;done
+      group:
+        kind: run
+  - id: buildlocally
+    exec:
+      label: "1- Build image locally"
+      component: udi
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: "podman build --no-cache -f Dockerfile -t {{imagename}}:{{tag}}"
+      group:
+        kind: build
+        isDefault: true
+  - id: authpodmanforregistry
+    exec:
+      label: "2- Auth podman in internal cluster registry"
+      component: udi
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: "podman login --tls-verify=false -u {{whoami}} -p {{token}} {{localregistry}}"
+      group:
+        kind: run
+  - id: pushimagetoregistry
+    exec:
+      label: "3- Push image in cluster registry"
+      component: udi
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: "podman push localhost/{{imagename}}:{{tag}} {{localregistry}}/{{whoami}}-devspaces/{{imagename}}:{{tag}}"
+      group:
+        kind: run
+  - id: createnewapp
+    exec:
+      label: "4- Start new app based on built image"
+      component: udi
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: "oc new-app --image={{localregistry}}/{{whoami}}-devspaces/{{imagename}}:{{tag}} --name={{imagename}}"
+      group:
+        kind: run
