@@ -26,7 +26,7 @@ commands:
       component: udi
       workingDir: ${PROJECT_SOURCE}
       commandLine: |
-        oc new-build --name {{buildname}} --binary --strategy docker; \
+        oc new-build --name {{buildname}} --binary --strategy docker -l "app={{buildname}}"; \
         oc start-build {{buildname}} --from-dir .
       group:
         kind: build
@@ -53,10 +53,23 @@ commands:
       component: udi
       workingDir: ${PROJECT_SOURCE}
       commandLine: |
-          oc expose deployment/python-devspaces --port 8080; \
-          oc create route edge --service python-devspaces --insecure-policy Redirect
+          oc expose deployment/{{buildname}} --port 8080; \
+          oc create route edge --service {{buildname}} --insecure-policy Redirect
       group:
         kind: run
+  - id: rebuildapp
+    exec:
+      label: "5- Rebuild newapp"
+      component: udi
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: |
+          oc delete bc,deployment,is {{buildname}}; \
+          oc new-build --name {{buildname}} --binary --strategy docker -l "app={{buildname}}"; \
+          oc start-build {{buildname}} --from-dir .; \
+          wait;\
+          oc new-app -i {{buildname}}:{{tag}} --name {{buildname}}
+      group:
+        kind: run        
 events:
   postStart:
     - "cleanupdeployimagestreamandimages"
