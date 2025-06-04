@@ -1,8 +1,0 @@
-{
-    "recommendations": [
-        "ms-python.python",
-        "redhat.vscode-openshift-connector",
-        "ms-python.black-formatter",
-        "cnshenj.vscode-task-manager"
-    ]
-}
