@@ -22,10 +22,12 @@ commands:
         kind: run
   - id: buildlocally
     exec:
-      label: "1- Build image locally"
+      label: "1- Build image locally (not from repo)"
       component: udi
       workingDir: ${PROJECT_SOURCE}
-      commandLine: "oc new-build . --name {{buildname}}"
+      commandLine: |
+        oc new-build --name {{buildname}} --binary --strategy docker; \
+        oc start-build {{buildname}} --from-dir .
       group:
         kind: build
         isDefault: true
