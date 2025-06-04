@@ -58,5 +58,7 @@ commands:
       group:
         kind: run
 events:
+  postStart:
+    - "cleanupdeployimagestreamandimages"
   preStop:
-    - "cleanupdeployimagestreamandimages"        
+    - "cleanupdeployimagestreamandimages"
