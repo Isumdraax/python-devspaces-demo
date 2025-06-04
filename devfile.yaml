@@ -4,7 +4,8 @@ metadata:
 variables:
   whoami: $(oc whoami)
   token: $(oc whoami -t)
-  imagename: "python-devspaces-demo"
+  imagename: "img-python-devspaces"
+  deploymentname: "deploy-python-devspaces"
   localregistry: "image-registry.openshift-image-registry.svc:5000"
   tag: "latest"
 components:
@@ -18,7 +19,7 @@ commands:
       component: udi
       workingDir: ${PROJECT_SOURCE}
       commandLine: |
-        oc delete deployment {{imagename}}; \
+        oc delete deployment {{deploymentname}}; \
         oc delete bc {{imagename}}; \
         oc delete is {{imagename}}; \
         for i in $(oc get images | grep "{{localregistry}}/{{whoami}}-devspaces/{{imagename}}" | awk '{print $1}'); do oc delete image $i;done
@@ -38,7 +39,7 @@ commands:
       label: "2- Start new app based on built image"
       component: udi
       workingDir: ${PROJECT_SOURCE}
-      commandLine: "oc new-app {{imagename}}:{{tag}} --name={{imagename}}"
+      commandLine: "oc new-app {{imagename}}:{{tag}} --name={{deploymentname}}"
       group:
         kind: run
   - id: testnewapp
@@ -46,6 +47,6 @@ commands:
       label: "3- Run curl command inside the pod to ensure the service is running"
       component: udi
       workingDir: ${PROJECT_SOURCE}
-      commandLine: "oc exec $(oc get pod -l deployment={{imagename}} -o custom-columns=POD:.metadata.name --no-headers) -- curl -s http://127.0.0.1:8080"
+      commandLine: "oc exec $(oc get pod -l deployment={{deploymentname}} -o custom-columns=POD:.metadata.name --no-headers) -- curl -s http://127.0.0.1:8080"
       group:
         kind: run
