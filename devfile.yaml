@@ -28,6 +28,7 @@ commands:
       commandLine: |
         oc new-build --name {{buildname}} --binary --strategy docker -l "app={{buildname}}"; \
         oc start-build {{buildname}} --from-dir .
+        while [[ $(oc get build -l "app={{buildname}}" -o 'jsonpath={..status.conditions[?(@.type=="Complete")].status}') != "True" ]]; do echo "waiting for build $(oc get build -l "app={{buildname}}") to complete ..." && sleep 1; done
       group:
         kind: build
         isDefault: true
@@ -66,7 +67,7 @@ commands:
           oc delete bc,deployment,is {{buildname}}; \
           oc new-build --name {{buildname}} --binary --strategy docker -l "app={{buildname}}"; \
           oc start-build {{buildname}} --from-dir .; \
-          wait;\
+          while [[ $(oc get build -l "app={{buildname}}" -o 'jsonpath={..status.conditions[?(@.type=="Complete")].status}') != "True" ]]; do echo "waiting for build $(oc get build -l "app={{buildname}}") to complete ..." && sleep 1; done; \
           oc new-app -i {{buildname}}:{{tag}} --name {{buildname}}
       group:
         kind: run        
