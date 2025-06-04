@@ -51,7 +51,10 @@ commands:
       component: udi
       workingDir: ${PROJECT_SOURCE}
       commandLine: |
-          oc expose deployment/python-devspaces --port 8080 \
+          oc expose deployment/python-devspaces --port 8080; \
           oc create route edge --service python-devspaces --insecure-policy Redirect
       group:
         kind: run
+events:
+  preStop:
+    - "cleanupdeployimagestreamandimages"        
