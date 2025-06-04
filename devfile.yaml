@@ -17,10 +17,7 @@ commands:
       label: "0- Cleanup deploy, imagesteams and images"
       component: udi
       workingDir: ${PROJECT_SOURCE}
-      commandLine: |
-        oc delete bc {{buildname}}; \
-        oc delete deployment {{buildname}}; \
-        oc delete is {{buildname}}; \
+      commandLine: oc delete bc,deployment,is,svc,route {{buildname}}
       group:
         kind: run
   - id: buildlocally
@@ -40,11 +37,21 @@ commands:
       commandLine: "oc new-app -i {{buildname}}:{{tag}} --name {{buildname}}"
       group:
         kind: run
-  - id: testnewapp
+  - id: testnewappinsidepod
     exec:
       label: "3- Run curl command inside the pod to ensure the service is running"
       component: udi
       workingDir: ${PROJECT_SOURCE}
       commandLine: "oc exec $(oc get pod -l deployment={{buildname}} -o custom-columns=POD:.metadata.name --no-headers) -- curl -s http://127.0.0.1:8080"
+      group:
+        kind: run
+  - id: exposenewapp
+    exec:
+      label: "4- Expose newapp to external world"
+      component: udi
+      workingDir: ${PROJECT_SOURCE}
+      commandLine: |
+          oc expose deployment/python-devspaces --port 8080 \
+          oc create route edge --service python-devspaces --insecure-policy Redirect
       group:
         kind: run
